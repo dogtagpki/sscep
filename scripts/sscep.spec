@@ -9,8 +9,8 @@ Release:      1
 Summary:      Simple SCEP client
 License:      BSD
 Group:        Productivity/Security
-Source:       %{name}-%{version}.tar.gz
-URL:          https://github.com/certnanny/sscep
+Source:       https://github.com/dogtagpki/%{name}/archive/v%{version}-pki/%{name}-%{version}-pki.tar.gz
+URL:          https://github.com/dogtagpki/sscep
 Requires:     openssl >= 1:1.1.0
 
 BuildRequires: autoconf
@@ -22,7 +22,7 @@ BuildRequires: openssl-devel
 Simple SCEP (Simple Certificate Enrollment Protocol) client.
 
 %prep
-%setup -n %{name}-%{version}
+%setup -n %{name}-%{version}-pki
 
 %build
 ./bootstrap.sh
