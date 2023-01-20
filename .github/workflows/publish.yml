@@ -2,47 +2,50 @@ name: Publish SSCEP
 
 on: [push, pull_request]
 
+env:
+  NAMESPACE: ${{ vars.REGISTRY_NAMESPACE || github.repository_owner }}
+
 jobs:
   init:
     name: Initialization
     runs-on: ubuntu-latest
     steps:
-    - name: Container registry configuration
-      run: |
-        echo "REGISTRY: ${{ vars.REGISTRY }}"
-        echo "REGISTRY_NAMESPACE: ${{ vars.REGISTRY_NAMESPACE }}"
+      - name: Container registry configuration
+        run: |
+          echo "REGISTRY: ${{ vars.REGISTRY }}"
+          echo "REGISTRY_NAMESPACE: ${{ vars.REGISTRY_NAMESPACE }}"
 
   build:
     name: Building SSCEP
     needs: init
     runs-on: ubuntu-latest
     steps:
-    - name: Clone repository
-      uses: actions/checkout@v3
+      - name: Clone repository
+        uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-    - name: Build sscep-builder image
-      uses: docker/build-push-action@v3
-      with:
-        context: .
-        tags: sscep-builder
-        target: sscep-builder
+      - name: Build sscep-builder image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          tags: sscep-builder
+          target: sscep-builder
 
-    - name: Build sscep-dist image
-      uses: docker/build-push-action@v3
-      with:
-        context: .
-        tags: sscep-dist
-        target: sscep-dist
-        outputs: type=docker,dest=sscep-dist.tar
+      - name: Build sscep-dist image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          tags: sscep-dist
+          target: sscep-dist
+          outputs: type=docker,dest=sscep-dist.tar
 
-    - name: Store sscep-dist image
-      uses: actions/cache@v3
-      with:
-        key: sscep-dist-${{ github.sha }}
-        path: sscep-dist.tar
+      - name: Store sscep-dist image
+        uses: actions/cache@v3
+        with:
+          key: sscep-dist-${{ github.sha }}
+          path: sscep-dist.tar
 
   publish:
     name: Publishing SSCEP
@@ -50,30 +53,30 @@ jobs:
     needs: [init, build]
     runs-on: ubuntu-latest
     steps:
-    - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v2
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-      if: vars.REGISTRY == 'ghcr.io'
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ vars.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        if: vars.REGISTRY == 'ghcr.io'
 
-    - name: Log in to other container registry
-      uses: docker/login-action@v2
-      with:
-        registry: ${{ vars.REGISTRY }}
-        username: ${{ secrets.REGISTRY_USERNAME }}
-        password: ${{ secrets.REGISTRY_PASSWORD }}
-      if: vars.REGISTRY != 'ghcr.io'
+      - name: Log in to other container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ vars.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+        if: vars.REGISTRY != 'ghcr.io'
 
-    - name: Retrieve sscep-dist image
-      uses: actions/cache@v3
-      with:
-        key: sscep-dist-${{ github.sha }}
-        path: sscep-dist.tar
+      - name: Retrieve sscep-dist image
+        uses: actions/cache@v3
+        with:
+          key: sscep-dist-${{ github.sha }}
+          path: sscep-dist.tar
 
-    - name: Publish sscep-dist image
-      run: |
-        docker load --input sscep-dist.tar
-        docker tag sscep-dist ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/sscep-dist:latest
-        docker push ${{ vars.REGISTRY }}/${{ vars.REGISTRY_NAMESPACE }}/sscep-dist:latest
+      - name: Publish sscep-dist image
+        run: |
+          docker load --input sscep-dist.tar
+          docker tag sscep-dist ${{ vars.REGISTRY }}/$NAMESPACE/sscep-dist:latest
+          docker push ${{ vars.REGISTRY }}/$NAMESPACE/sscep-dist:latest
