@@ -37,3 +37,15 @@ FROM alpine:latest AS sscep-dist
 
 # Import SSCEP packages
 COPY --from=sscep-builder /root/RPMS /root/RPMS/
+
+################################################################################
+FROM registry.fedoraproject.org/fedora:latest AS sscep
+
+# Import SSCEP packages
+COPY --from=sscep-dist /root/RPMS /tmp/RPMS/
+
+# Install SSCEP packages
+RUN dnf localinstall -y /tmp/RPMS/* \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf \
+    && rm -rf /tmp/RPMS

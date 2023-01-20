@@ -47,6 +47,20 @@ jobs:
           key: sscep-dist-${{ github.sha }}
           path: sscep-dist.tar
 
+      - name: Build sscep image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          tags: sscep
+          target: sscep
+          outputs: type=docker,dest=sscep.tar
+
+      - name: Store sscep image
+        uses: actions/cache@v3
+        with:
+          key: sscep-${{ github.sha }}
+          path: sscep.tar
+
   publish:
     name: Publishing SSCEP
     if: github.event_name == 'push' && github.ref_name == 'v0.10.0-pki' && vars.REGISTRY != ''
@@ -80,3 +94,15 @@ jobs:
           docker load --input sscep-dist.tar
           docker tag sscep-dist ${{ vars.REGISTRY }}/$NAMESPACE/sscep-dist:latest
           docker push ${{ vars.REGISTRY }}/$NAMESPACE/sscep-dist:latest
+
+      - name: Retrieve sscep image
+        uses: actions/cache@v3
+        with:
+          key: sscep-${{ github.sha }}
+          path: sscep.tar
+
+      - name: Publish sscep image
+        run: |
+          docker load --input sscep.tar
+          docker tag sscep ${{ vars.REGISTRY }}/$NAMESPACE/sscep:latest
+          docker push ${{ vars.REGISTRY }}/$NAMESPACE/sscep:latest
