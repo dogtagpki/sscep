@@ -21,20 +21,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Build sscep-builder image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: .
           tags: sscep-builder
           target: sscep-builder
 
       - name: Build sscep-dist image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: .
           tags: sscep-dist
@@ -42,13 +42,13 @@ jobs:
           outputs: type=docker,dest=sscep-dist.tar
 
       - name: Store sscep-dist image
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: sscep-dist-${{ github.sha }}
           path: sscep-dist.tar
 
       - name: Build sscep image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: .
           tags: sscep
@@ -56,7 +56,7 @@ jobs:
           outputs: type=docker,dest=sscep.tar
 
       - name: Store sscep image
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: sscep-${{ github.sha }}
           path: sscep.tar
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ vars.REGISTRY }}
           username: ${{ github.actor }}
@@ -76,7 +76,7 @@ jobs:
         if: vars.REGISTRY == 'ghcr.io'
 
       - name: Log in to other container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ vars.REGISTRY }}
           username: ${{ secrets.REGISTRY_USERNAME }}
@@ -84,7 +84,7 @@ jobs:
         if: vars.REGISTRY != 'ghcr.io'
 
       - name: Retrieve sscep-dist image
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: sscep-dist-${{ github.sha }}
           path: sscep-dist.tar
@@ -96,7 +96,7 @@ jobs:
           docker push ${{ vars.REGISTRY }}/$NAMESPACE/sscep-dist:latest
 
       - name: Retrieve sscep image
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: sscep-${{ github.sha }}
           path: sscep.tar
